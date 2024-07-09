@@ -110,7 +110,6 @@
                 .then(res=>{
                     this._showList(this);
                 })
-            })
             //console.log(this.searchApp);
             /*
             const list = await Imports.system_catalogs.app.nomenclature.search()

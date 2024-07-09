@@ -100,7 +100,7 @@
         rebuildOptionsList(data) {
             this._circleSearch();
             console.log(this.searchApp);
-            this.searchApp(data);
+            this.searchApp(data)
                 .then(json=>{
                     if (json.length > 0)
                         this._buildList(json);

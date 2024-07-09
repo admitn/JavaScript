@@ -100,6 +100,16 @@
         rebuildOptionsList(data) {
             this._circleSearch();
             console.log(this.searchApp);
+            this.searchApp
+                .then(json=>{
+                    if (json.length > 0)
+                        this._buildList(json);
+                    else
+                        this._buildListError();
+                .then(res=>{
+                    this._showList(this);
+                })
+            })
             //console.log(this.searchApp);
             /*
             const list = await Imports.system_catalogs.app.nomenclature.search()

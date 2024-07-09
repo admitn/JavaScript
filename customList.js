@@ -83,7 +83,7 @@
             if (this.timerId)
                 clearTimeout(this.timerId);
             if (e.target.value.length > 0) {
-                this.timerId = setTimeout(this.rebuildOptionsList.bind(this), 500, e.target.value.length);
+                this.timerId = setTimeout(this.rebuildOptionsList.bind(this), 500, e.target.value);
             }
         }
         _circleSearch() {
@@ -99,7 +99,12 @@
         }
         rebuildOptionsList(data) {
             this._circleSearch();
-            console.log(this.searchApp);
+            this.searchApp.sort("_name", true)
+            .where((f,g)=> g.fts(data) && g.and(f.__name.like(data),f.__deletedAt.eq(null)))
+            .all().then(e=>{
+                console.log(e)
+            });
+            //console.log(this.searchApp);
             /*
             const list = await Imports.system_catalogs.app.nomenclature.search()
         .size(50)

@@ -106,6 +106,7 @@
                         this._buildList(json);
                     else
                         this._buildListError();
+                })
                 .then(res=>{
                     this._showList(this);
                 })

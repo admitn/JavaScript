@@ -1,8 +1,9 @@
     class classCustomList {
-        constructor(editor, cell, onRendered, success, cancel, editorParams) {
+        constructor(editor, cell, onRendered, success, cancel, editorParams, searchApp) {
             this.edit = editor;
             this.table = editor.table;
             this.cell = cell;
+            this.searchApp = searchApp;
 
             //Event
             //this.event = new CustomEvent("saveList");
@@ -98,6 +99,15 @@
         }
         rebuildOptionsList(data) {
             this._circleSearch();
+            console.log(this.searchApp);
+            /*
+            const list = await Imports.system_catalogs.app.nomenclature.search()
+        .size(50)
+        .sort("_name", true)
+        .where((f,g)=> g.fts(value!) && g.and(f.__name.like(value!),f.__deletedAt.eq(null)))
+        .all();
+        return list;
+        
             fetch(`https://jsonplaceholder.typicode.com/users/${data}`).then(res => {
                 if (res.ok) {
                     res.json()
@@ -109,12 +119,11 @@
                         })
                 }
                 else {
-                    /*
                     this._buildListError()
                     this._showList(this);
-                    */
                 }
             })
+            */
         }
         _createListElement() {
             let listEl = document.createElement('div');

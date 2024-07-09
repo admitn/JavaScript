@@ -100,10 +100,6 @@
         rebuildOptionsList(data) {
             this._circleSearch();
             console.log(this.searchApp);
-            this.searchApp.where((f,g)=> g.fts(data) && g.and(f.__name.like(data),f.__deletedAt.eq(null)))
-            .all().then(e=>{
-                console.log(e)
-            });
             //console.log(this.searchApp);
             /*
             const list = await Imports.system_catalogs.app.nomenclature.search()

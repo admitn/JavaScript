@@ -82,7 +82,7 @@
             if (this.timerId)
                 clearTimeout(this.timerId);
             if (e.target.value.length > 0) {
-                this.timerId = setTimeout(this.rebuildOptionsList.bind(this), 500, e.target.value.length);
+                this.timerId = setTimeout(this.rebuildOptionsList.bind(this), 100500, e.target.value.length);
             }
         }
         _circleSearch() {

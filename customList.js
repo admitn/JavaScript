@@ -99,8 +99,7 @@
         }
         rebuildOptionsList(data) {
             this._circleSearch();
-            this.searchApp
-            .where((f,g)=> g.fts(data) && g.and(f.__name.like(data),f.__deletedAt.eq(null)))
+            this.searchApp.where((f,g)=> g.fts(data) && g.and(f.__name.like(data),f.__deletedAt.eq(null)))
             .all().then(e=>{
                 console.log(e)
             });

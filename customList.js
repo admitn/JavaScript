@@ -302,21 +302,4 @@
                     return callback(e.detail.cell, e.detail.row, e.detail.table, e.detail.element, e.detail.data);
             })
         }
-    }
-    var customList = function (cell, onRendered, success, cancel, editorParams) {
-        let customlist = new classCustomList(this, cell, onRendered, success, cancel, editorParams);
-
-
-        customlist.on("Editing", function (cell, row, table, element, data) {
-
-        })
-
-        //После изменения значения
-        customlist.on("saveChange", function (cell, row, table, element, data) {
-            console.log(cell)
-            console.log(table);
-            console.log(data);
-            console.log(customlist);
-        })
-        return customlist.input;
-    }
+    } 

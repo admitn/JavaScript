@@ -16,7 +16,8 @@
             this.event = [];
             this.timerId = null;
             this.popup = null;
-
+            this.dataApp = null;
+            
             this.blurable = true;
 
             this.lastAction = '';
@@ -98,44 +99,23 @@
             this._showList();
         }
         rebuildOptionsList(data) {
+            this.dataApp = null;
             this._circleSearch();
             console.log(this.searchApp);
             this.searchApp(data)
-                .then(json=>{
-                    if (json.length > 0)
-                        this._buildList(json);
-                    else
-                        this._buildListError();
-                })
-                .then(res=>{
-                    this._showList(this);
-                })
-            //console.log(this.searchApp);
-            /*
-            const list = await Imports.system_catalogs.app.nomenclature.search()
-        .size(50)
-        .sort("_name", true)
-        .where((f,g)=> g.fts(value!) && g.and(f.__name.like(value!),f.__deletedAt.eq(null)))
-        .all();
-        return list;
-        
-            fetch(`https://jsonplaceholder.typicode.com/users/${data}`).then(res => {
-                if (res.ok) {
-                    res.json()
-                        .then(json => {
-                            this._buildList(json)
-                        })
-                        .then(res => {
-                            this._showList(this);
-                        })
+            .then(json=>{
+                if (json.length > 0){
+                    this.dataApp = json;
+                    this._buildList(json);
                 }
-                else {
-                    this._buildListError()
-                    this._showList(this);
-                }
+                else
+                    this._buildListError();
             })
-            */
+            .then(res=>{
+                this._showList(this);
+            })
         }
+        
         _createListElement() {
             let listEl = document.createElement('div');
             listEl.classList.add("tabulator-edit-list");
@@ -287,10 +267,10 @@
         _chooseItem(item) {
             const element = item.element;
             let row = this.cell.getRow();
-            let json = { listCustom: element.textContent, uid: element.dataset.uid, ref: element.dataset.ref };
+            let json = { listCustom: element.textContent, uid: element.dataset.uid, ref: element.dataset.ref};
             row.update(json).then((e) => {
                 const saveChange = new CustomEvent("saveChange", {
-                    detail: { element: item.element, cell: this.cell, row: this.cell.getRow(), table: this.table, data: json }
+                    detail: { element: item.element, cell: this.cell, row: this.cell.getRow(), table: this.table, data: json, dataApp:this.dataApp}
                 });
                 this.listEl.dispatchEvent(saveChange);
             }).then(e => {
@@ -302,7 +282,7 @@
                 this.focusedItem.element.classList.remove("focus");
             }
             else {
-                console.log("dasads");
+                console.log("_clearChoices");
             }
             this.focusedItem = null;
         }
@@ -321,7 +301,7 @@
         on(e, callback) {
             this.listEl.addEventListener(e, function (e) {
                 if (e.type == "saveChange")
-                    return callback(e.detail.cell, e.detail.row, e.detail.table, e.detail.element, e.detail.data);
+                    return callback(e.detail.cell, e.detail.row, e.detail.table, e.detail.element, e.detail.data, e.detail.dataApp);
             })
         }
     } 

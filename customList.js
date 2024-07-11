@@ -1,4 +1,4 @@
-class classCustomList {
+class CustomListClass {
     constructor(editor, cell, onRendered, success, cancel, editorParams) {
         this.edit = editor;
         this.table = editor.table;

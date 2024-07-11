@@ -2,17 +2,10 @@ class CustomListClass {
     constructor(editor, cell, onRendered, success, cancel, editorParams) {
         this.edit = editor;
         this.table = editor.table;
-        this.cell = cell;
-        
+        this.cell = cell;        
 
-        //Event
-        //this.event = new CustomEvent("saveList");
-        this.params = this._initialize(editorParams);
         this.input = this._createInputElement();
         this.listEl = this._createListElement();
-
-        this.searchApp;
-        this.jsonData;
 
         this.focusedItem = null;
         this.displayItems = [];
@@ -34,20 +27,7 @@ class CustomListClass {
             cancel: cancel
         };
     }
-    _initialize(params) {
-        if (typeof(params) === 'object'){
-            if (typeof(params.app) === 'function')
-                this.searchApp = params.app;
-            else
-                console.warn("editorParams.app - не является функцией");
-
-            if (typeof (params.jsonData) === 'function')
-                this.jsonData = params.jsonData;
-            else
-                console.warn("editorParams.jsonData - не является функцией");
-        }
-        return params;
-    }
+        
     _onRendered() {
         this.input.value = this.cell.getValue();
         this.input.focus({ preventScroll: true });
@@ -131,21 +111,16 @@ class CustomListClass {
         this._showList();
     }
     rebuildOptionsList(data) {
-        this.dataApp = null;
-        this._circleSearch();
-        this.searchApp(data)
-            .then(json => {
-                if (Object.values(json).length >0) {
-                    this._buildList(json);
-                }
-                else
-                    this._buildListError();
-            })
-            .then(res => {
-                this._showList(this);
-            })
+        console.log("rebuildOptionsList")
+        const inputSearch = new CustomEvent("inputSearch",{
+            detail: {data:data}
+        });
+        this.input.dispatchEvent(inputSearch);
     }
-
+    searchUser(data){
+        console.log("searchUser")
+        console.log(data)
+    }
     _createListElement() {
         let listEl = document.createElement('div');
         listEl.classList.add("tabulator-edit-list");
@@ -296,6 +271,8 @@ class CustomListClass {
         this._chooseItem(item);
     }
     _chooseItem(item) {
+        console.log("_chooseItem")
+/*    
         const element = item.element;
         let row = this.cell.getRow();
         this.jsonData(item).then(json=>{
@@ -308,6 +285,7 @@ class CustomListClass {
                 this._cancel();
             }).then(e => this.table.classCustomList = null);
         });
+*/    
     }
     _clearChoices() {
         if (this.focusedItem && this.focusedItem.element) {
@@ -331,9 +309,23 @@ class CustomListClass {
         this.actions.cancel();
     }
     on(e, callback) {
+        /*
         this.listEl.addEventListener(e, function (e) {
             if (e.type == "saveChange")
                 return callback(e.detail.cell, e.detail.row, e.detail.table, e.detail.element, e.detail.data, e.detail.dataApp);
         })
+        */
+        if (e == 'saveChange'){
+            this.listEl.addEventListener(e, function (e) {
+                return callback(e.detail.cell, e.detail.row, e.detail.table, e.detail.element, e.detail.data, e.detail.dataApp);
+            });
+        }
+        if (e == 'inputSearch'){
+            console.log(e);
+            console.log(this.input);
+            this.input.addEventListener(e, function (e) {
+                return callback(e.detail.data);
+            });
+        }
     }
 }

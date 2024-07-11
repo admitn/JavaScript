@@ -1,157 +1,133 @@
-class CustomListClass {
-    constructor(editor, cell, onRendered, success, cancel, editorParams) {
-        this.edit = editor;
-        this.table = editor.table;
-        this.cell = cell;        
+var listFunc = function (cell, onRendered, success, cancel, editorParams) {
+    let edit = this,
+        table = this.table,
+        input = _createInputElement(),
+        listEl = _createListElement(),
+        focusedItem = null,
+        displayItems = [],
+        event = [],
+        timerId = null,
+        popup = null,
+        dataApp = null,
+        lastAction = '';
 
-        this.input = this._createInputElement();
-        this.listEl = this._createListElement();
-
-        this.focusedItem = null;
-        this.displayItems = [];
-        this.event = [];
-        this.timerId = null;
-        this.popup = null;
-        this.dataApp = null;
-        this.dataJson = [];
-        this.blurable = true;
-
-        this.lastAction = '';
-        //Рендер
-        onRendered(
-            this._onRendered.bind(this)
-        )
-
-        this.actions = {
-            success: success,
-            cancel: cancel
-        };
-    }
-        
-    _onRendered() {
-        this.input.value = this.cell.getValue();
-        this.input.focus({ preventScroll: true });
-    }
-
-    _createInputElement() {
+    let blurable = true;
+    //Рендер
+    onRendered(function() {
+        input.value = cell.getValue();
+        input.focus({ preventScroll: true });
+    })
+    
+    let actions = {
+        success: success,
+        cancel: cancel
+    };
+    function _createInputElement() {
         let input = document.createElement('input');
         input.setAttribute('type', 'search');
         input.style.padding = "4px";
         input.style.width = "100%";
         input.style.boxSizing = "border-box";
-        this._bindInputEvents(input);
-        this.table.classCustomList = this;
+        _bindInputEvents(input);
+        table.classCustomList = this;
         return input;
     }
-    _bindInputEvents(input) {
-        input.addEventListener("focus", this._inputFocus.bind(this));
-        input.addEventListener("click", this._inputClick.bind(this));
-        input.addEventListener("blur", this._inputBlur.bind(this));
-        input.addEventListener("keydown", this._inputKeyDown.bind(this));
-        input.addEventListener("search", this._inputSearch.bind(this));
-        input.addEventListener("input", this._inputInput.bind(this));
+
+    function _bindInputEvents(input) {
+        input.addEventListener("focus", _inputFocus);
+        input.addEventListener("click", _inputClick);
+        input.addEventListener("blur", _inputBlur);
+        input.addEventListener("keydown", _inputKeyDown);
+        input.addEventListener("search", _inputSearch);
+        input.addEventListener("input", _inputInput);
     }
-    _inputBlur(e) {
-        if (this.blurable) {
-            if (this.popup) {
-                this.popup.hide();
+
+    function _inputBlur(e) {
+        if (blurable) {
+            if (popup) {
+                popup.hide();
                 setTimeout(() => {
-                this.actions.cancel();
+                    actions.cancel();
                 }, 10);
             }
             else
-                this._resolveValue(true);
+                _resolveValue(true);
         }
-        /*
-        if (this.blurable) {
-            if (this.popup) {
-                this.popup.hide();
-                setTimeout(() => {
-                    this.actions.cancel();
-                }, 10);
-            }
-        }
-            */
     }
 
-    _resolveValue(blur){
-        if (blur){
-            this.actions.cancel();
-            clearTimeout(this.timerId)
+    function _resolveValue(blur) {
+        if (blur) {
+            actions.cancel();
+            clearTimeout(timerId)
         }
     }
-    _inputClick(e) {
+    function _inputClick(e) {
+        console.log(e);
         e.stopPropagation();
     }
-    _inputFocus(e) {
+    function _inputFocus(e) {
         //this.rebuildOptionsList();
         //this._showList(this);
     }
-    _inputSearch(e) {
+    function _inputSearch(e) {
         if (!e.target.value.length) {
-            this._clearChoices();
+            _clearChoices();
         }
     }
-    _inputInput(e) {
-        if (this.timerId)
-            clearTimeout(this.timerId);
+    function _inputInput(e) {
+        if (timerId)
+            clearTimeout(timerId);
         if (e.target.value.length > 0) {
-            this.timerId = setTimeout(this.rebuildOptionsList.bind(this), 500, e.target.value);
+            timerId = setTimeout(rebuildOptionsList, 500, e.target.value);
         }
     }
-    _circleSearch() {
-        this.listEl.innerHTML = "";
+
+    function _circleSearch() {
+        listEl.innerHTML = "";
         let el = document.createElement('div');
         el.classList.add("tabulator-edit-list-placeholder");
         el.classList.add("Circle_search");
         el.style = "padding: 0;"
         //this.listEl.style = "overflow: hidden;text-align: center;padding: 5px 0;"
         //this.listEl.style.minWidth = this.cell.getElement().offsetWidth + 'px';
-        this.listEl.appendChild(el);
-        this._showList();
+        listEl.appendChild(el);
+        _showList();
     }
-    rebuildOptionsList(data) {
+    function rebuildOptionsList(data) {
         console.log("rebuildOptionsList")
-        const inputSearch = new CustomEvent("inputSearch",{
-            detail: {data:data}
-        });
-        this.input.dispatchEvent(inputSearch);
     }
-    searchUser(data){
-        console.log("searchUser")
-        console.log(data)
-    }
-    _createListElement() {
+
+    function _createListElement() {
         let listEl = document.createElement('div');
         listEl.classList.add("tabulator-edit-list");
         listEl.classList.add("tab-customList");
-        listEl.style.minWidth = this.cell.getElement().offsetWidth + 'px';
+        listEl.style.minWidth = cell.getElement().offsetWidth + 'px';
         listEl.focus();
-        listEl.addEventListener("mousedown", this._preventBlur.bind(this));
-        listEl.addEventListener("keydown", this._inputKeyDown.bind(this));
+        listEl.addEventListener("mousedown", _preventBlur);
+        listEl.addEventListener("keydown", _inputKeyDown);
         return listEl;
     }
-    _buildListError() {
-        this.listEl.innerHTML = "";
+    function _buildListError() {
+        listEl.innerHTML = "";
         let el = document.createElement('div');
         el.classList.add("tabulator-edit-list-placeholder");
         el.textContent = "Результатов не найдено";
-        el.addEventListener("mousedown", this._preventBlur.bind(this));
-        el.addEventListener("click", this._cancel.bind(this));
-        this.listEl.appendChild(el);
+        el.addEventListener("mousedown", _preventBlur);
+        el.addEventListener("click", _cancel);
+        listEl.appendChild(el);
     }
-    _buildList(data) {
-        this.listEl.innerHTML = "";
+    function _buildList(data) {
+        listEl.innerHTML = "";
         if (data.length) {
             data.forEach((option) => {
-                this._buildItem(option);
+                _buildItem(option);
             });
         }
         else
-            this._buildItem(data);
+            _buildItem(data);
     }
-    _buildItem(item) {
-        this.dataApp = item;
+    function _buildItem(item) {
+        dataApp = item;
         let el = document.createElement('div');
         el.tabIndex = 0;
         el.classList.add("tabulator-edit-list-item");
@@ -160,158 +136,150 @@ class CustomListClass {
         el.setAttribute('data-uid', item.username);
         el.setAttribute('data-ref', item.email);
 
-        el.addEventListener("click", this._itemClick.bind(this, item));
-        el.addEventListener("mousedown", this._preventBlur.bind(this));
+        el.addEventListener("click", _itemClick);
+        el.addEventListener("mousedown", _preventBlur);
 
         item.element = el;
-        this.listEl.appendChild(el);
-        this.displayItems.push(item);
+        listEl.appendChild(el);
+        displayItems.push(item);
     }
-    _showList() {
-        if (!this.popup)
-            this.popup = this.edit.popup(this.listEl);
+    function _showList() {
+        if (!popup)
+            popup = edit.popup(listEl);
 
-        this.popup.show(this.cell.getElement(), "bottom");
+        popup.show(cell.getElement(), "bottom");
     }
-    _inputKeyDown(e) {
+    function _inputKeyDown(e) {
         switch (e.keyCode) {
             case 38: //up arrow
-                this._keyUp(e);
+                _keyUp(e);
                 break;
             case 40: //down arrow
-                this._keyDown(e);
+                _keyDown(e);
                 break;
             case 37: //left arrow
             case 39: //right arrow
-                this._keySide(e);
+                _keySide(e);
                 break;
             case 13: //enter
-                this._keyEnter();
+                _keyEnter();
                 break;
             case 27: //escape
-                this._keyEsc();
+                _keyEsc();
                 break;
             case 36: //home
             case 35: //end
-                this._keyHomeEnd(e);
+                _keyHomeEnd(e);
                 break;
             case 9: //tab
-                this._keyTab(e);
+                _keyTab(e);
                 break;
         }
     }
 
-    _keyUp(e) {
-        var index = this.displayItems.indexOf(this.focusedItem);
+    function _keyUp(e) {
+        var index = displayItems.indexOf(focusedItem);
         e.stopImmediatePropagation();
         e.stopPropagation();
         e.preventDefault();
 
         if (index > 0) {
-            this._focusItem(this.displayItems[index - 1]);
+            _focusItem(displayItems[index - 1]);
         }
         if (index == 0) {
-            this._focusItem(this.displayItems[this.displayItems.length - 1]);
+            _focusItem(displayItems[displayItems.length - 1]);
         }
     }
-    _keyDown(e) {
-        var index = this.displayItems.indexOf(this.focusedItem);
+    function _keyDown(e) {
+        var index = displayItems.indexOf(focusedItem);
         e.stopImmediatePropagation();
         e.stopPropagation();
         e.preventDefault();
-        if (index < this.displayItems.length) {
-            if (index == -1 || index == this.displayItems.length - 1)
-                this._focusItem(this.displayItems[0]);
+        if (index < displayItems.length) {
+            if (index == -1 || index == displayItems.length - 1)
+                _focusItem(displayItems[0]);
             else {
-                this._focusItem(this.displayItems[index + 1]);
+                _focusItem(displayItems[index + 1]);
             }
         }
     }
-    _keySide(e) {
+    function _keySide(e) {
 
     }
-    _keyEnter() {
-        if (this.focusedItem) {
-            this._chooseItem(this.focusedItem);
+    function _keyEnter() {
+        if (focusedItem) {
+            _chooseItem(focusedItem);
         }
     }
-    _keyEsc(e) {
-        this._cancel();
+    function _keyEsc(e) {
+        _cancel();
     }
-    _keyHomeEnd(e) {
+    function _keyHomeEnd(e) {
         e.stopImmediatePropagation();
     }
 
-    _keyTab(e) {
-        this._cancel();
+    function _keyTab(e) {
+        _cancel();
     }
-    _preventBlur(e) {
-        this.blurable = false;
+    function _preventBlur(e) {
+        blurable = false;
         setTimeout(() => {
-            this.blurable = true;
+            blurable = true;
         }, 10);
         //this._cancel()
         //this._chooseItem(e.target);
     }
-    _focusItem(item) {
-        this.lastAction = 'focus'
+    function _focusItem(item) {
+        lastAction = 'focus'
 
-        if (this.focusedItem && this.focusedItem.element) {
-            this.focusedItem.element.classList.remove("focus");
+        if (focusedItem && focusedItem.element) {
+            focusedItem.element.classList.remove("focus");
         }
 
-        this.focusedItem = item;
+        focusedItem = item;
         if (item && item.element) {
             item.element.classList.add("focus");
             item.element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
         }
     }
-    _itemClick(item, e) {
+    function _itemClick() {
+        console.log();
+        console.log(event);
+        /*
         e.stopPropagation();
-        this._chooseItem(item);
+        _chooseItem(e.target);
+        */
     }
-    _chooseItem(item) {
-        console.log("_chooseItem") 
+    function _chooseItem(item) {
+        console.log("_chooseItem")
     }
-    _clearChoices() {
-        if (this.focusedItem && this.focusedItem.element) {
-            this.focusedItem.element.classList.remove("focus");
+    function _clearChoices() {
+        if (focusedItem && focusedItem.element) {
+            focusedItem.element.classList.remove("focus");
         }
         else {
             console.log("_clearChoices");
         }
-        this.focusedItem = null;
+        focusedItem = null;
     }
 
-    _clearList() {
-        while (this.listEl.firstChild) this.listEl.removeChild(this.listEl.firstChild);
-        this.displayItems = [];
+    function _clearList() {
+        while (listEl.firstChild) listEl.removeChild(listEl.firstChild);
+        displayItems = [];
     }
-    _cancel() {
-        if (this.popup) {
-            this.popup.hide();
-            this._clearList()
+    function _cancel() {
+        if (popup) {
+            popup.hide();
+            _clearList()
         }
-        this.actions.cancel();
+        actions.cancel();
     }
-    on(e, callback) {
-        /*
-        this.listEl.addEventListener(e, function (e) {
+    function on(e, callback) {
+        listEl.addEventListener(e, function (e) {
             if (e.type == "saveChange")
                 return callback(e.detail.cell, e.detail.row, e.detail.table, e.detail.element, e.detail.data, e.detail.dataApp);
         })
-        */
-        if (e == 'saveChange'){
-            this.listEl.addEventListener(e, function (e) {
-                return callback(e.detail.cell, e.detail.row, e.detail.table, e.detail.element, e.detail.data, e.detail.dataApp);
-            });
-        }
-        if (e == 'inputSearch'){
-            console.log(e);
-            console.log(this.input);
-            this.input.addEventListener(e, function (e) {
-                return callback(e.detail.data);
-            });
-        }
     }
+
+    return input;
 }

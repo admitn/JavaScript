@@ -271,21 +271,7 @@ class CustomListClass {
         this._chooseItem(item);
     }
     _chooseItem(item) {
-        console.log("_chooseItem")
-/*    
-        const element = item.element;
-        let row = this.cell.getRow();
-        this.jsonData(item).then(json=>{
-            row.update(json).then((e) => {
-                const saveChange = new CustomEvent("saveChange", {
-                    detail: { element: item.element, cell: this.cell, row: this.cell.getRow(), table: this.table, data: json, dataApp: this.dataApp }
-                });
-                this.listEl.dispatchEvent(saveChange);
-            }).then(e => {
-                this._cancel();
-            }).then(e => this.table.classCustomList = null);
-        });
-*/    
+        console.log("_chooseItem") 
     }
     _clearChoices() {
         if (this.focusedItem && this.focusedItem.element) {

@@ -1,285 +1,333 @@
-var listFunc = function (cell, onRendered, success, cancel, editorParams) {
-    let edit = this,
-        table = this.table,
-        input = _createInputElement(),
-        listEl = _createListElement(),
-        focusedItem = null,
-        displayItems = [],
-        event = [],
-        timerId = null,
-        popup = null,
-        dataApp = null,
-        lastAction = '';
+function CustomListClass(editor, cell, onRendered, success, cancel, editorParams) {
+    return class {
+        constructor() {
+            this.edit = editor;
+            this.table = editor.table;
+            this.cell = cell;
 
-    let blurable = true;
-    //Рендер
-    onRendered(function() {
-        input.value = cell.getValue();
-        input.focus({ preventScroll: true });
-    })
-    
-    let actions = {
-        success: success,
-        cancel: cancel
-    };
-    function _createInputElement() {
-        let input = document.createElement('input');
-        input.setAttribute('type', 'search');
-        input.style.padding = "4px";
-        input.style.width = "100%";
-        input.style.boxSizing = "border-box";
-        _bindInputEvents(input);
-        table.classCustomList = this;
-        return input;
-    }
+            this.input = this._createInputElement();
+            this.listEl = this._createListElement();
 
-    function _bindInputEvents(input) {
-        input.addEventListener("focus", _inputFocus);
-        input.addEventListener("click", _inputClick);
-        input.addEventListener("blur", _inputBlur);
-        input.addEventListener("keydown", _inputKeyDown);
-        input.addEventListener("search", _inputSearch);
-        input.addEventListener("input", _inputInput);
-    }
+            this.focusedItem = null;
+            this.displayItems = [];
+            this.event = [];
+            this.timerId = null;
+            this.popup = null;
+            this.dataApp = null;
+            this.dataJson = [];
+            this.blurable = true;
 
-    function _inputBlur(e) {
-        if (blurable) {
-            if (popup) {
-                popup.hide();
-                setTimeout(() => {
-                    actions.cancel();
-                }, 10);
+            this.lastAction = '';
+            //Рендер
+            onRendered(
+                this._onRendered.bind(this)
+            )
+
+            this.actions = {
+                success: success,
+                cancel: cancel
+            };
+        }
+
+        _onRendered() {
+            this.input.value = this.cell.getValue();
+            this.input.style.height = "100%";
+            this.input.focus({ preventScroll: true });
+        }
+
+        _createInputElement() {
+            let input = document.createElement('input');
+            input.setAttribute('type', 'search');
+            input.style.padding = "4px";
+            input.style.width = "100%";
+            input.style.boxSizing = "border-box";
+            this._bindInputEvents(input);
+            this.table.classCustomList = this;
+            return input;
+        }
+
+        _bindInputEvents(input) {
+            input.addEventListener("focus", this._inputFocus.bind(this));
+            input.addEventListener("click", this._inputClick.bind(this));
+            input.addEventListener("blur", this._inputBlur.bind(this));
+            input.addEventListener("keydown", this._inputKeyDown.bind(this));
+            input.addEventListener("search", this._inputSearch.bind(this));
+            input.addEventListener("input", this._inputInput.bind(this));
+        }
+        _inputBlur(e) {
+            if (this.blurable) {
+                if (this.popup) {
+                    this.popup.hide();
+                    setTimeout(() => {
+                        this.actions.cancel();
+                    }, 10);
+                }
+                else
+                    this._resolveValue(true);
+            }
+        }
+
+        _resolveValue(blur) {
+            if (blur) {
+                this.actions.cancel();
+                clearTimeout(this.timerId)
+            }
+        }
+        _inputClick(e) {
+            e.stopPropagation();
+        }
+        _inputFocus(e) {
+            //this.rebuildOptionsList();
+            //this._showList(this);
+        }
+        _inputSearch(e) {
+            if (!e.target.value.length) {
+                this._clearChoices();
+            }
+        }
+        _inputInput(e) {
+            if (this.timerId)
+                clearTimeout(this.timerId);
+            if (e.target.value.length > 0) {
+                this.timerId = setTimeout(this.rebuildOptionsList.bind(this), 500, e.target.value);
+            }
+        }
+        _circleSearch() {
+            this.listEl.innerHTML = "";
+            let el = document.createElement('div');
+            el.classList.add("tabulator-edit-list-placeholder");
+            el.classList.add("Circle_search");
+            el.style = "padding: 0;"
+            //this.listEl.style = "overflow: hidden;text-align: center;padding: 5px 0;"
+            //this.listEl.style.minWidth = this.cell.getElement().offsetWidth + 'px';
+            this.listEl.appendChild(el);
+            this._showList();
+        }
+        rebuildOptionsList(data) {
+            this.input.dispatchEvent(new CustomEvent("inputSearch",{detail: {data:data}}));
+        }
+
+        searchUser(data){
+            this._circleSearch();
+            data.then(json => {
+                if (Object.values(json).length >0)
+                    this._buildList(json);                
+                else
+                    this._buildListError();
+            }).then(res => {
+                this._showList(this);
+            })
+        }
+        
+        _createListElement() {
+            let listEl = document.createElement('div');
+            listEl.classList.add("tabulator-edit-list");
+            listEl.classList.add("tab-customList");
+            listEl.style.minWidth = this.cell.getElement().offsetWidth + 'px';
+            listEl.focus();
+            listEl.addEventListener("mousedown", this._preventBlur.bind(this));
+            listEl.addEventListener("keydown", this._inputKeyDown.bind(this));
+            return listEl;
+        }
+        _buildListError() {
+            this.listEl.innerHTML = "";
+            let el = document.createElement('div');
+            el.classList.add("tabulator-edit-list-placeholder");
+            el.textContent = "Результатов не найдено";
+            el.addEventListener("mousedown", this._preventBlur.bind(this));
+            el.addEventListener("click", this._cancel.bind(this));
+            this.listEl.appendChild(el);
+        }
+        _buildList(data) {
+            this.listEl.innerHTML = "";
+            if (data.length) {
+                data.forEach((option) => {
+                    this._buildItem(option);
+                });
             }
             else
-                _resolveValue(true);
+                this._buildItem(data);
         }
-    }
+        _buildItem(item) {
+            this.dataApp = item;
+            let el = document.createElement('div');
+            el.tabIndex = 0;
+            el.classList.add("tabulator-edit-list-item");
+            el.classList.add("tabulator-edit-list-group-level-0");
+            el.textContent = item.name;
+            el.setAttribute('data-uid', item.username);
+            el.setAttribute('data-ref', item.email);
 
-    function _resolveValue(blur) {
-        if (blur) {
-            actions.cancel();
-            clearTimeout(timerId)
+            el.addEventListener("click", this._itemClick.bind(this, item));
+            el.addEventListener("mousedown", this._preventBlur.bind(this));
+
+            item.element = el;
+            this.listEl.appendChild(el);
+            this.displayItems.push(item);
         }
-    }
-    function _inputClick(e) {
-        console.log(e);
-        e.stopPropagation();
-    }
-    function _inputFocus(e) {
-        //this.rebuildOptionsList();
-        //this._showList(this);
-    }
-    function _inputSearch(e) {
-        if (!e.target.value.length) {
-            _clearChoices();
+        _showList() {
+            if (!this.popup)
+                this.popup = this.edit.popup(this.listEl);
+
+            this.popup.show(this.cell.getElement(), "bottom");
         }
-    }
-    function _inputInput(e) {
-        if (timerId)
-            clearTimeout(timerId);
-        if (e.target.value.length > 0) {
-            timerId = setTimeout(rebuildOptionsList, 500, e.target.value);
+        _inputKeyDown(e) {
+            switch (e.keyCode) {
+                case 38: //up arrow
+                    this._keyUp(e);
+                    break;
+                case 40: //down arrow
+                    this._keyDown(e);
+                    break;
+                case 37: //left arrow
+                case 39: //right arrow
+                    this._keySide(e);
+                    break;
+                case 13: //enter
+                    this._keyEnter();
+                    break;
+                case 27: //escape
+                    this._keyEsc();
+                    break;
+                case 36: //home
+                case 35: //end
+                    this._keyHomeEnd(e);
+                    break;
+                case 9: //tab
+                    this._keyTab(e);
+                    break;
+            }
         }
-    }
 
-    function _circleSearch() {
-        listEl.innerHTML = "";
-        let el = document.createElement('div');
-        el.classList.add("tabulator-edit-list-placeholder");
-        el.classList.add("Circle_search");
-        el.style = "padding: 0;"
-        //this.listEl.style = "overflow: hidden;text-align: center;padding: 5px 0;"
-        //this.listEl.style.minWidth = this.cell.getElement().offsetWidth + 'px';
-        listEl.appendChild(el);
-        _showList();
-    }
-    function rebuildOptionsList(data) {
-        console.log("rebuildOptionsList")
-    }
+        _keyUp(e) {
+            var index = this.displayItems.indexOf(this.focusedItem);
+            e.stopImmediatePropagation();
+            e.stopPropagation();
+            e.preventDefault();
 
-    function _createListElement() {
-        let listEl = document.createElement('div');
-        listEl.classList.add("tabulator-edit-list");
-        listEl.classList.add("tab-customList");
-        listEl.style.minWidth = cell.getElement().offsetWidth + 'px';
-        listEl.focus();
-        listEl.addEventListener("mousedown", _preventBlur);
-        listEl.addEventListener("keydown", _inputKeyDown);
-        return listEl;
-    }
-    function _buildListError() {
-        listEl.innerHTML = "";
-        let el = document.createElement('div');
-        el.classList.add("tabulator-edit-list-placeholder");
-        el.textContent = "Результатов не найдено";
-        el.addEventListener("mousedown", _preventBlur);
-        el.addEventListener("click", _cancel);
-        listEl.appendChild(el);
-    }
-    function _buildList(data) {
-        listEl.innerHTML = "";
-        if (data.length) {
-            data.forEach((option) => {
-                _buildItem(option);
-            });
+            if (index > 0) {
+                this._focusItem(this.displayItems[index - 1]);
+            }
+            if (index == 0) {
+                this._focusItem(this.displayItems[this.displayItems.length - 1]);
+            }
         }
-        else
-            _buildItem(data);
-    }
-    function _buildItem(item) {
-        dataApp = item;
-        let el = document.createElement('div');
-        el.tabIndex = 0;
-        el.classList.add("tabulator-edit-list-item");
-        el.classList.add("tabulator-edit-list-group-level-0");
-        el.textContent = item.name;
-        el.setAttribute('data-uid', item.username);
-        el.setAttribute('data-ref', item.email);
-
-        el.addEventListener("click", _itemClick);
-        el.addEventListener("mousedown", _preventBlur);
-
-        item.element = el;
-        listEl.appendChild(el);
-        displayItems.push(item);
-    }
-    function _showList() {
-        if (!popup)
-            popup = edit.popup(listEl);
-
-        popup.show(cell.getElement(), "bottom");
-    }
-    function _inputKeyDown(e) {
-        switch (e.keyCode) {
-            case 38: //up arrow
-                _keyUp(e);
-                break;
-            case 40: //down arrow
-                _keyDown(e);
-                break;
-            case 37: //left arrow
-            case 39: //right arrow
-                _keySide(e);
-                break;
-            case 13: //enter
-                _keyEnter();
-                break;
-            case 27: //escape
-                _keyEsc();
-                break;
-            case 36: //home
-            case 35: //end
-                _keyHomeEnd(e);
-                break;
-            case 9: //tab
-                _keyTab(e);
-                break;
+        _keyDown(e) {
+            var index = this.displayItems.indexOf(this.focusedItem);
+            e.stopImmediatePropagation();
+            e.stopPropagation();
+            e.preventDefault();
+            if (index < this.displayItems.length) {
+                if (index == -1 || index == this.displayItems.length - 1)
+                    this._focusItem(this.displayItems[0]);
+                else {
+                    this._focusItem(this.displayItems[index + 1]);
+                }
+            }
         }
-    }
+        _keySide(e) {
 
-    function _keyUp(e) {
-        var index = displayItems.indexOf(focusedItem);
-        e.stopImmediatePropagation();
-        e.stopPropagation();
-        e.preventDefault();
+        }
+        _keyEnter() {
+            if (this.focusedItem) {
+                this._chooseItem(this.focusedItem);
+            }
+        }
+        _keyEsc(e) {
+            this._cancel();
+        }
+        _keyHomeEnd(e) {
+            e.stopImmediatePropagation();
+        }
 
-        if (index > 0) {
-            _focusItem(displayItems[index - 1]);
+        _keyTab(e) {
+            this._cancel();
         }
-        if (index == 0) {
-            _focusItem(displayItems[displayItems.length - 1]);
+        _preventBlur(e) {
+            this.blurable = false;
+            setTimeout(() => {
+                this.blurable = true;
+            }, 10);
+            //this._cancel()
+            //this._chooseItem(e.target);
         }
-    }
-    function _keyDown(e) {
-        var index = displayItems.indexOf(focusedItem);
-        e.stopImmediatePropagation();
-        e.stopPropagation();
-        e.preventDefault();
-        if (index < displayItems.length) {
-            if (index == -1 || index == displayItems.length - 1)
-                _focusItem(displayItems[0]);
+        _focusItem(item) {
+            this.lastAction = 'focus'
+
+            if (this.focusedItem && this.focusedItem.element) {
+                this.focusedItem.element.classList.remove("focus");
+            }
+
+            this.focusedItem = item;
+            if (item && item.element) {
+                item.element.classList.add("focus");
+                item.element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+            }
+        }
+        _itemClick(item, e) {
+            e.stopPropagation();
+            this._chooseItem(item);
+        }
+        _chooseItem(item) {
+            this.focusedItem = item.element;
+            this.listEl.dispatchEvent(new CustomEvent("chooseItem",{detail: {data:item}}));
+        }
+        chooseItem(data){
+            let row = this.cell.getRow();
+            let promise = new Promise((resolve, reject) => {
+                resolve(data);
+            }).then(json=>{
+                row.update(json).then((e) => {
+                    this.listEl.dispatchEvent(new CustomEvent("saveChange",{detail:{cell: this.cell, row: row, table: this.table, data: json, element:this.focusedItem}}))
+                }).then(e=> this._cancel())
+                .then(e=> this.table.classCustomList = null);
+            })
+        }
+
+        _clearChoices() {
+            if (this.focusedItem && this.focusedItem.element) {
+                this.focusedItem.element.classList.remove("focus");
+            }
             else {
-                _focusItem(displayItems[index + 1]);
+                console.log("_clearChoices");
+            }
+            this.focusedItem = null;
+        }
+
+        _clearList() {
+            while (this.listEl.firstChild) this.listEl.removeChild(this.listEl.firstChild);
+            this.displayItems = [];
+        }
+        _cancel() {
+            if (this.popup) {
+                this.popup.hide();
+                this._clearList()
+            }
+            this.actions.cancel();
+        }
+        on(e, callback) {
+            /*
+            this.listEl.addEventListener(e, function (e) {
+                if (e.type == "saveChange")
+                    return callback(e.detail.cell, e.detail.row, e.detail.table, e.detail.element, e.detail.data, e.detail.dataApp);
+            })
+            */
+            if (e == 'saveChange'){
+                this.listEl.addEventListener(e, function (e) {
+                    return callback(e.detail.cell, e.detail.row, e.detail.table, e.detail.data, e.detail.element);
+                });
+            }
+            if (e =='chooseItem'){
+                this.listEl.addEventListener(e, function (e) {
+                    return callback(e.detail.data);
+                });
+            }
+
+            if (e == 'inputSearch'){
+                this.input.addEventListener(e, function (e) {
+                    return callback(e.detail.data);
+                });
             }
         }
     }
-    function _keySide(e) {
-
-    }
-    function _keyEnter() {
-        if (focusedItem) {
-            _chooseItem(focusedItem);
-        }
-    }
-    function _keyEsc(e) {
-        _cancel();
-    }
-    function _keyHomeEnd(e) {
-        e.stopImmediatePropagation();
-    }
-
-    function _keyTab(e) {
-        _cancel();
-    }
-    function _preventBlur(e) {
-        blurable = false;
-        setTimeout(() => {
-            blurable = true;
-        }, 10);
-        //this._cancel()
-        //this._chooseItem(e.target);
-    }
-    function _focusItem(item) {
-        lastAction = 'focus'
-
-        if (focusedItem && focusedItem.element) {
-            focusedItem.element.classList.remove("focus");
-        }
-
-        focusedItem = item;
-        if (item && item.element) {
-            item.element.classList.add("focus");
-            item.element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-        }
-    }
-    function _itemClick() {
-        console.log();
-        console.log(event);
-        /*
-        e.stopPropagation();
-        _chooseItem(e.target);
-        */
-    }
-    function _chooseItem(item) {
-        console.log("_chooseItem")
-    }
-    function _clearChoices() {
-        if (focusedItem && focusedItem.element) {
-            focusedItem.element.classList.remove("focus");
-        }
-        else {
-            console.log("_clearChoices");
-        }
-        focusedItem = null;
-    }
-
-    function _clearList() {
-        while (listEl.firstChild) listEl.removeChild(listEl.firstChild);
-        displayItems = [];
-    }
-    function _cancel() {
-        if (popup) {
-            popup.hide();
-            _clearList()
-        }
-        actions.cancel();
-    }
-    function on(e, callback) {
-        listEl.addEventListener(e, function (e) {
-            if (e.type == "saveChange")
-                return callback(e.detail.cell, e.detail.row, e.detail.table, e.detail.element, e.detail.data, e.detail.dataApp);
-        })
-    }
-
-    return input;
 }

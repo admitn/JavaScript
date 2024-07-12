@@ -1,6 +1,6 @@
 function CustomListClass(editor, cell, onRendered, success, cancel, editorParams) {
     return class {
-        constructor() {
+        constructor() { 
             this.edit = editor;
             this.table = editor.table;
             this.cell = cell;

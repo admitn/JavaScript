@@ -74,10 +74,11 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
             }
         }
         _inputClick(e) {
-            console.log("da");
             e.stopPropagation();
         }
         _inputFocus(e) {
+            this.input.dispatchEvent(new CustomEvent("beginningInput"));
+            //console.log("da");
             //this.rebuildOptionsList();
             //this._showList(this);
         }
@@ -328,9 +329,10 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
                 });
             }
 
+            //Начало ввода
             if (e == 'beginningInput'){
                 this.input.addEventListener(e, function (e) {
-                    return callback(e.detail.data);
+                    return callback(e.target.value);
                 })
             }
         }

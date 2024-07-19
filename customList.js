@@ -74,6 +74,7 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
             }
         }
         _inputClick(e) {
+            console.log("da");
             e.stopPropagation();
         }
         _inputFocus(e) {
@@ -104,7 +105,7 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
             this._showList();
         }
         rebuildOptionsList(data) {
-            this.input.dispatchEvent(new CustomEvent("inputSearch",{detail: {data:data}}));
+            this.input.dispatchEvent(new CustomEvent("endInput",{detail: {data:data}}));
         }
 
         searchUser(data){
@@ -306,27 +307,31 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
             this.actions.cancel();
         }
         on(e, callback) {
-            /*
-            this.listEl.addEventListener(e, function (e) {
-                if (e.type == "saveChange")
-                    return callback(e.detail.cell, e.detail.row, e.detail.table, e.detail.element, e.detail.data, e.detail.dataApp);
-            })
-            */
+            //После изменения значения
             if (e == 'saveChange'){
                 this.listEl.addEventListener(e, function (e) {
                     return callback(e.detail.cell, e.detail.row, e.detail.table, e.detail.data, e.detail.element);
                 });
             }
+
+            //Когда выбрано
             if (e =='chooseItem'){
                 this.listEl.addEventListener(e, function (e) {
                     return callback(e.detail.data);
                 });
             }
-
-            if (e == 'inputSearch'){
+            
+            //После окончание ввода
+            if (e == 'endInput'){
                 this.input.addEventListener(e, function (e) {
                     return callback(e.detail.data);
                 });
+            }
+
+            if (e == 'beginningInput'){
+                this.input.addEventListener(e, function (e) {
+                    return callback(e.detail.data);
+                })
             }
         }
     }

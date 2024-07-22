@@ -31,7 +31,10 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
         }
 
         _onRendered() {
-            this.input.value = this.cell.getValue();
+            if (this.cell.getValue())
+                this.input.value = this.cell.getValue();
+            else
+                this.input.value = '';
             this.input.style.height = "100%";
             this.input.focus({ preventScroll: true });
         }

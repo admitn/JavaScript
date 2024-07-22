@@ -18,6 +18,7 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
             this.blurable = true;
 
             this.lastAction = '';
+            this.dataField = '';
             //Рендер
             onRendered(
                 this._onRendered.bind(this)
@@ -109,7 +110,9 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
             this.input.dispatchEvent(new CustomEvent("endInput",{detail: {data:data}}));
         }
 
-        searchUser(data){
+        searchUser(data, dataField){
+            if (dataField)
+                this.dataField = dataField;
             this._circleSearch();
             data.then(json => {
                 if (typeof(json) != 'object')
@@ -158,10 +161,7 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
             el.tabIndex = 0;
             el.classList.add("tabulator-edit-list-item");
             el.classList.add("tabulator-edit-list-group-level-0");
-            el.textContent = item.name;
-            el.setAttribute('data-uid', item.username);
-            el.setAttribute('data-ref', item.email);
-
+            el.textContent = item[this.dataField];
             el.addEventListener("click", this._itemClick.bind(this, item));
             el.addEventListener("mousedown", this._preventBlur.bind(this));
 

@@ -111,6 +111,8 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
 
         searchUser(data){
             this._circleSearch();
+            if (typeof(data) != 'object')
+                data = JSON.parse(data);
             data.then(json => {
                 if (Object.values(json).length >0)
                     this._buildList(json);                

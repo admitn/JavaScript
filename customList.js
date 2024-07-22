@@ -337,7 +337,7 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
             //Начало ввода
             if (e == 'beginningInput'){
                 this.input.addEventListener(e, function (e) {
-                    return callback(e.target.value);
+                    return callback(e.target.value, e.target);
                 })
             }
         }

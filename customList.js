@@ -5,6 +5,7 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
             this.table = editor.table;
             this.cell = cell;
 
+            this._init();
             this.input = this._createInputElement();
             this.listEl = this._createListElement();
 
@@ -16,6 +17,7 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
             this.dataApp = null;
             this.dataJson = [];
             this.blurable = true;
+            this.inputFocus = false;
 
             this.lastAction = '';
             this.dataField = '';
@@ -29,7 +31,9 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
                 cancel: cancel
             };
         }
-
+        _init(){
+            console.warn(`Start custmoList tabulator, class CustomListClass`);
+        }
         _onRendered() {
             if (this.cell.getValue())
                 this.input.value = this.cell.getValue();
@@ -37,6 +41,7 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
                 this.input.value = '';
             this.input.style.height = "100%";
             this.input.focus({ preventScroll: true });
+            this.inputFocus = true;
         }
 
         _createInputElement() {
@@ -114,9 +119,16 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
         }
 
         searchUser(data, dataField){
+            this._clearList()
             if (dataField)
                 this.dataField = dataField;
             this._circleSearch();
+            
+            if (!(data instanceof Promise)){
+                data = new Promise((resolve, reject) => {
+                    resolve(data);
+                });
+            }
             data.then(json => {
                 if (typeof(json) != 'object')
                     json = JSON.parse(json);
@@ -173,10 +185,12 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
             this.displayItems.push(item);
         }
         _showList() {
-            if (!this.popup)
-                this.popup = this.edit.popup(this.listEl);
+            if (this.inputFocus){
+                if (!this.popup)
+                    this.popup = this.edit.popup(this.listEl);
 
-            this.popup.show(this.cell.getElement(), "bottom");
+                this.popup.show(this.cell.getElement(), "bottom");
+            }
         }
         _inputKeyDown(e) {
             switch (e.keyCode) {
@@ -239,6 +253,16 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
             if (this.focusedItem) {
                 this._chooseItem(this.focusedItem);
             }
+            else{
+                if (this.input.value.length > 0)
+                    this._cancel();
+                else{
+                    this.actions.success(this.input.value)
+                    let json = JSON.parse(JSON.stringify(this.cell.getRow().getData()));
+                    this.input.dispatchEvent(new CustomEvent("saveChange",{detail:{cell: this.cell, row: this.cell.getRow(), table: this.table, data: json, element:this.input}}))
+                    this.actions.cancel()
+                }
+            }
         }
         _keyEsc(e) {
             this._cancel();
@@ -296,7 +320,11 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
                 this.focusedItem.element.classList.remove("focus");
             }
             else {
-                console.log("_clearChoices");
+                this.input.dispatchEvent(new CustomEvent("clearInput"));
+                if (this.popup) {
+                    this.popup.hide();
+                    this._clearList()
+                }
             }
             this.focusedItem = null;
         }
@@ -306,6 +334,7 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
             this.displayItems = [];
         }
         _cancel() {
+            this.inputFocus = false;
             if (this.popup) {
                 this.popup.hide();
                 this._clearList()
@@ -315,6 +344,10 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
         on(e, callback) {
             //После изменения значения
             if (e == 'saveChange'){
+                this.input.addEventListener(e, function (e) {
+                    return callback(e.detail.cell, e.detail.row, e.detail.table, e.detail.data, e.detail.element);
+                });
+
                 this.listEl.addEventListener(e, function (e) {
                     return callback(e.detail.cell, e.detail.row, e.detail.table, e.detail.data, e.detail.element);
                 });
@@ -338,6 +371,12 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
             if (e == 'beginningInput'){
                 this.input.addEventListener(e, function (e) {
                     return callback(e.target.value, e.target);
+                })
+            }
+
+            if (e == 'clearInput'){
+                this.input.addEventListener(e, function (e) {
+                    return callback();
                 })
             }
         }

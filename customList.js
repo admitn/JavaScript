@@ -376,7 +376,7 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
 
             if (e == 'clearInput'){
                 this.input.addEventListener(e, function (e) {
-                    return callback();
+                    return callback(e.target);
                 })
             }
         }

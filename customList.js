@@ -120,25 +120,27 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
 
         searchUser(data, dataField){
             this._clearList()
-            if (dataField)
-                this.dataField = dataField;
-            this._circleSearch();
-            
-            if (!(data instanceof Promise)){
-                data = new Promise((resolve, reject) => {
-                    resolve(data);
-                });
-            }
-            data.then(json => {
-                if (typeof(json) != 'object')
-                    json = JSON.parse(json);
-                if (Object.values(json).length >0)
-                    this._buildList(json);                
-                else
-                    this._buildListError();
-            }).then(res => {
-                this._showList(this);
-            })
+            setTimeout(()=>{
+                if (dataField)
+                    this.dataField = dataField;
+                this._circleSearch();
+                
+                if (!(data instanceof Promise)){
+                    data = new Promise((resolve, reject) => {
+                        resolve(data);
+                    });
+                }
+                data.then(json => {
+                    if (typeof(json) != 'object')
+                        json = JSON.parse(json);
+                    if (Object.values(json).length >0)
+                        this._buildList(json);                
+                    else
+                        this._buildListError();
+                }).then(res => {
+                    this._showList(this);
+                })
+            },10)
         }
         
         _createListElement() {

@@ -100,6 +100,7 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
             if (this.timerId)
                 clearTimeout(this.timerId);
             if (e.target.value.length > 0) {
+                this._circleSearch();
                 this.timerId = setTimeout(this.rebuildOptionsList.bind(this), 500, e.target.value);
             }
         }

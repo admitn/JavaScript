@@ -105,6 +105,9 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
                 this._circleSearch();
                 this.timerId = setTimeout(this.rebuildOptionsList.bind(this), 500, e.target.value);
             }
+            else{
+                this._clearChoices();
+            }
         }
         _circleSearch() {
             this.listEl.innerHTML = "";

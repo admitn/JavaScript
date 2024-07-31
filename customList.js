@@ -67,6 +67,7 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
             if (this.blurable) {
                 if (this.popup) {
                     this.popup.hide();
+                    this.inputFocus = false;
                     setTimeout(() => {
                         this.actions.cancel();
                     }, 10);
@@ -74,6 +75,7 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
                 else
                     this._resolveValue(true);
             }
+            
         }
 
         _resolveValue(blur) {
@@ -101,7 +103,7 @@ function CustomListClass(editor, cell, onRendered, success, cancel, editorParams
                 clearTimeout(this.timerId);
             if (e.target.value.length > 0) {
                 this._circleSearch();
-                this.timerId = setTimeout(this.rebuildOptionsList.bind(this), 500, e.target.value);
+                this.timerId = setTimeout(this.rebuildOptionsList.bind(this), 45500, e.target.value);
             }
         }
         _circleSearch() {
